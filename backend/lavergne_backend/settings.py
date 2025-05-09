@@ -53,6 +53,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # config CORS
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'lavergne_backend.urls'
@@ -125,5 +127,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Cross-origin resource sharing
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # URL của frontend (Next.js)
+    "http://localhost:3000",  # URL của frontend Local (Next.js)
 ]
+
+#  Secure API attack with CSRF (Cross-Site Request Forgery),
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
