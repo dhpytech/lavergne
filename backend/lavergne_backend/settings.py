@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'dashboards',
     # config API
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     # config Third Party
     'corsheaders',
 ]
@@ -134,3 +136,9 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
