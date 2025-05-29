@@ -2,54 +2,118 @@
 
 import { useState, useEffect } from 'react'
 
-const EMPLOYEES = ['Nguyễn Văn A', 'Trần Thị B', 'Lê Văn C']
+type MainDataRow = {
+  productCode: string
+  goodPro: string | number
+  dlnc: string | number
+  case: string
+  reject: string | number
+  scrap: string | number
+  screen: string | number
+  visslab: string | number
+}
+
+type StopTimeRow = {
+  stopTime: string
+  hour: string
+}
+
+type ProblemRow = {
+  problem: string
+  hour: string
+}
+
+type FormData = {
+  date: string
+  employee: string
+  shift: string
+  mainData: MainDataRow[]
+  stopTimeRows: number
+  problemRows: number
+  stopTimes: StopTimeRow[]
+  problems: ProblemRow[]
+  comment: string
+}
+
 const PRODUCT_CODES = ['P001', 'P002', 'P003']
 const CASES = ['Case A', 'Case B', 'Case C']
 const STOP_TIMES = ['Machine A', 'Machine B']
 const PROBLEMS = ['Problem X', 'Problem Y']
 
 export default function MarisInputPage() {
-  const [mainDataRows, setMainDataRows] = useState(4)
+  const defaultMainDataRowCount = 1
+  const defaultStopTimesRowCount = 0
+  const defaultProblemsRowCount = 0
 
-  const [formData, setFormData] = useState({
+  const [mainDataRows, setMainDataRows] = useState<number>(defaultMainDataRowCount)
+  const [employees, setEmployees] = useState<{ id: number; name: string }[]>([])
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/account/nhanvien/`)
+      .then((res) => res.json())
+      .then((data) => setEmployees(data))
+      .catch((err) => console.error('Lỗi khi tải danh sách nhân viên:', err))
+  }, [])
+
+  const getEmptyMainData = (count: number): MainDataRow[] =>
+    Array.from({ length: count }, () => ({
+      productCode: '',
+      goodPro: '',
+      dlnc: '',
+      case: '',
+      reject: '',
+      scrap: '',
+      screen: '',
+      visslab: ''
+    }))
+
+  const getEmptyStopTimes = (count: number): StopTimeRow[] =>
+    Array.from({ length: count }, () => ({ stopTime: '', hour: '' }))
+
+  const getEmptyProblems = (count: number): ProblemRow[] =>
+    Array.from({ length: count }, () => ({ problem: '', hour: '' }))
+
+  const [formData, setFormData] = useState<FormData>({
     date: '',
     employee: '',
     shift: '',
-    mainData: [],
-    stopTimeRows: 2,
-    problemRows: 2,
-    stopTimes: [],
-    problems: [],
+    mainData: getEmptyMainData(defaultMainDataRowCount),
+    stopTimeRows: defaultStopTimesRowCount,
+    problemRows: defaultProblemsRowCount,
+    stopTimes: getEmptyStopTimes(defaultStopTimesRowCount),
+    problems: getEmptyProblems(defaultProblemsRowCount),
     comment: ''
   })
 
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      mainData: Array.from({ length: 4 }, () => ({
-        productCode: '',
-        goodPro: '',
-        dlnc: '',
-        case: '',
-        reject: '',
-        scrap: '',
-        screen: '',
-        visslab: ''
-      })),
-      stopTimes: Array.from({ length: 2 }, () => ({ stopTime: '', hour: '' })),
-      problems: Array.from({ length: 2 }, () => ({ problem: '', hour: '' }))
-    }))
-  }, [])
+  const resetForm = () => {
+    setFormData({
+      date: '',
+      employee: '',
+      shift: '',
+      mainData: getEmptyMainData(defaultMainDataRowCount),
+      stopTimeRows: defaultStopTimesRowCount,
+      problemRows: defaultProblemsRowCount,
+      stopTimes: getEmptyStopTimes(defaultStopTimesRowCount),
+      problems: getEmptyProblems(defaultProblemsRowCount),
+      comment: ''
+    })
+    setMainDataRows(defaultMainDataRowCount)
+  }
 
-  const updateFormArray = (type, index, key, value) => {
-    const updated = [...formData[type]]
+  const updateFormArray = <T extends keyof FormData>(
+    type: T,
+    index: number,
+    key: string,
+    value: any
+  ) => {
+    const updated = [...(formData[type] as any)]
     updated[index] = { ...updated[index], [key]: value }
     setFormData({ ...formData, [type]: updated })
   }
 
-  const handleMainDataRowChange = (count) => {
+  const handleMainDataRowChange = (count: number) => {
     setMainDataRows(count)
-    const newRows = Array.from({ length: count }, (_, i) =>
+    const newRows: MainDataRow[] = Array.from({ length: count }, (_, i) =>
       formData.mainData[i] || {
         productCode: '',
         goodPro: '',
@@ -64,7 +128,7 @@ export default function MarisInputPage() {
     setFormData({ ...formData, mainData: newRows })
   }
 
-  const handleDynamicRowChange = (type, count) => {
+  const handleDynamicRowChange = (type: 'stopTimes' | 'problems', count: number) => {
     setFormData({
       ...formData,
       [`${type}Rows`]: count,
@@ -78,13 +142,25 @@ export default function MarisInputPage() {
   }
 
   const handleSubmit = async () => {
-    const res = await fetch('http://localhost:8000/entries/maris', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    })
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/entries/maris/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
 
-    alert(res.ok ? 'Dữ liệu đã được gửi thành công!' : 'Gửi dữ liệu thất bại.')
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.log(JSON.stringify(formData, null, 2))
+        alert(`Gửi dữ liệu thất bại. Lỗi: ${res.status} - ${errorText}`)
+        return
+      }
+
+      alert('Dữ liệu đã được gửi thành công!')
+      resetForm()
+    } catch (error: any) {
+      alert(`Lỗi khi gửi dữ liệu: ${error.message}`)
+    }
   }
 
   return (
@@ -104,9 +180,11 @@ export default function MarisInputPage() {
           value={formData.employee}
           onChange={(e) => setFormData({ ...formData, employee: e.target.value })}
         >
-          <option value="">Chọn nhân viên</option>
-          {EMPLOYEES.map((emp) => (
-            <option key={emp} value={emp}>{emp}</option>
+          <option value="">Employees</option>
+          {employees.map((emp) => (
+            <option key={emp.id} value={emp.name}>
+              {emp.name}
+            </option>
           ))}
         </select>
         <select
@@ -114,9 +192,11 @@ export default function MarisInputPage() {
           value={formData.shift}
           onChange={(e) => setFormData({ ...formData, shift: e.target.value })}
         >
-          <option value="">Chọn ca</option>
-          {['Ca 1', 'Ca 2', 'Ca 3'].map((c) => (
-            <option key={c} value={c}>{c}</option>
+          <option value="">Shift</option>
+          {['Day', 'Night'].map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
           ))}
         </select>
       </div>
@@ -129,8 +209,10 @@ export default function MarisInputPage() {
           value={mainDataRows}
           onChange={(e) => handleMainDataRowChange(Number(e.target.value))}
         >
-          {[1, 2, 3, 4, 5].map(n => (
-            <option key={n} value={n}>{n}</option>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
           ))}
         </select>
       </div>
@@ -140,16 +222,39 @@ export default function MarisInputPage() {
         <h2 className="text-lg font-semibold">Dữ liệu Chính</h2>
         {formData.mainData.map((row, idx) => (
           <div key={idx} className="grid grid-cols-8 gap-2">
-            <select className="p-2 border rounded" value={row.productCode} onChange={(e) => updateFormArray('mainData', idx, 'productCode', e.target.value)}>
+            <select
+              className="p-2 border rounded"
+              value={row.productCode}
+              onChange={(e) => updateFormArray('mainData', idx, 'productCode', e.target.value)}
+            >
               <option value="">ProductCode</option>
-              {PRODUCT_CODES.map((code) => (<option key={code} value={code}>{code}</option>))}
+              {PRODUCT_CODES.map((code) => (
+                <option key={code} value={code}>
+                  {code}
+                </option>
+              ))}
             </select>
             {['goodPro', 'dlnc', 'reject', 'scrap', 'screen', 'visslab'].map((field) => (
-              <input key={field} type="number" placeholder={field} className="p-2 border rounded" value={row[field]} onChange={(e) => updateFormArray('mainData', idx, field, e.target.value)} />
+              <input
+                key={field}
+                type="number"
+                placeholder={field}
+                className="p-2 border rounded"
+                value={row[field as keyof MainDataRow] || ''}
+                onChange={(e) => updateFormArray('mainData', idx, field, e.target.value)}
+              />
             ))}
-            <select className="p-2 border rounded" value={row.case} onChange={(e) => updateFormArray('mainData', idx, 'case', e.target.value)}>
+            <select
+              className="p-2 border rounded"
+              value={row.case}
+              onChange={(e) => updateFormArray('mainData', idx, 'case', e.target.value)}
+            >
               <option value="">Case</option>
-              {CASES.map((c) => (<option key={c} value={c}>{c}</option>))}
+              {CASES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </div>
         ))}
@@ -158,16 +263,38 @@ export default function MarisInputPage() {
       {/* StopTime */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Stop Time</h2>
-        <select className="p-2 border rounded" value={formData.stopTimeRows} onChange={(e) => handleDynamicRowChange('stopTimes', Number(e.target.value))}>
-          {[0, 1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}</option>))}
+        <select
+          className="p-2 border rounded"
+          value={formData.stopTimeRows}
+          onChange={(e) => handleDynamicRowChange('stopTimes', Number(e.target.value))}
+        >
+          {[0, 1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
         </select>
         {formData.stopTimes.map((row, idx) => (
           <div key={idx} className="grid grid-cols-2 gap-2">
-            <select className="p-2 border rounded" value={row.stopTime} onChange={(e) => updateFormArray('stopTimes', idx, 'stopTime', e.target.value)}>
+            <select
+              className="p-2 border rounded"
+              value={row.stopTime}
+              onChange={(e) => updateFormArray('stopTimes', idx, 'stopTime', e.target.value)}
+            >
               <option value="">Chọn StopTime</option>
-              {STOP_TIMES.map((st) => (<option key={st} value={st}>{st}</option>))}
+              {STOP_TIMES.map((st) => (
+                <option key={st} value={st}>
+                  {st}
+                </option>
+              ))}
             </select>
-            <input type="text" placeholder="Giờ/Thời gian" className="p-2 border rounded" value={row.hour} onChange={(e) => updateFormArray('stopTimes', idx, 'hour', e.target.value)} />
+            <input
+              type="text"
+              placeholder="Giờ/Thời gian"
+              className="p-2 border rounded"
+              value={row.hour}
+              onChange={(e) => updateFormArray('stopTimes', idx, 'hour', e.target.value)}
+            />
           </div>
         ))}
       </div>
@@ -175,26 +302,58 @@ export default function MarisInputPage() {
       {/* Problem */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Problem</h2>
-        <select className="p-2 border rounded" value={formData.problemRows} onChange={(e) => handleDynamicRowChange('problems', Number(e.target.value))}>
-          {[0, 1, 2, 3, 4, 5].map((n) => (<option key={n} value={n}>{n}</option>))}
+        <select
+          className="p-2 border rounded"
+          value={formData.problemRows}
+          onChange={(e) => handleDynamicRowChange('problems', Number(e.target.value))}
+        >
+          {[0, 1, 2, 3, 4, 5].map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
         </select>
         {formData.problems.map((row, idx) => (
           <div key={idx} className="grid grid-cols-2 gap-2">
-            <select className="p-2 border rounded" value={row.problem} onChange={(e) => updateFormArray('problems', idx, 'problem', e.target.value)}>
+            <select
+              className="p-2 border rounded"
+              value={row.problem}
+              onChange={(e) => updateFormArray('problems', idx, 'problem', e.target.value)}
+            >
               <option value="">Chọn Problem</option>
-              {PROBLEMS.map((pr) => (<option key={pr} value={pr}>{pr}</option>))}
+              {PROBLEMS.map((pr) => (
+                <option key={pr} value={pr}>
+                  {pr}
+                </option>
+              ))}
             </select>
-            <input type="text" placeholder="Giờ" className="p-2 border rounded" value={row.hour} onChange={(e) => updateFormArray('problems', idx, 'hour', e.target.value)} />
+            <input
+              type="text"
+              placeholder="Giờ"
+              className="p-2 border rounded"
+              value={row.hour}
+              onChange={(e) => updateFormArray('problems', idx, 'hour', e.target.value)}
+            />
           </div>
         ))}
       </div>
 
       {/* Comment */}
       <div>
-        <textarea className="w-full p-2 border rounded" rows={3} placeholder="Ghi chú thêm (Comment)" value={formData.comment} onChange={(e) => setFormData({ ...formData, comment: e.target.value })} />
+        <textarea
+          placeholder="Comment"
+          className="p-2 border rounded w-full"
+          value={formData.comment}
+          onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+          rows={4}
+        />
       </div>
 
-      <button className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={handleSubmit}>
+      {/* Submit Button */}
+      <button
+        onClick={handleSubmit}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
         Nhập Dữ Liệu
       </button>
     </div>

@@ -14,7 +14,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8000/account/token/login/', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/account/token/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

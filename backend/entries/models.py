@@ -5,8 +5,8 @@ class MarisInput(models.Model):
     date = models.DateField()
     employee = models.CharField(max_length=100)
     shift = models.CharField(max_length=20)
-    main_data = models.JSONField()
-    stop_times = models.JSONField(blank=True, null=True)
+    mainData = models.JSONField(blank=True)
+    stopTimes = models.JSONField(blank=True, null=True)
     problems = models.JSONField(blank=True, null=True)
     comment = models.TextField(blank=True, null=True)
 

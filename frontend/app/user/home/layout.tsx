@@ -35,7 +35,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
   }, []);
 
   const handleLogout = async () => {
-    await fetch('http://localhost:8000/account/token/logout/', {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/account/token/logout/`, {
       method: 'POST',
       credentials: 'include',
     });

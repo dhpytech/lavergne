@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # config CORS
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'lavergne_backend.urls'
@@ -132,7 +133,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # URL của frontend Local (Next.js)
 ]
-
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True  # nếu bạn dùng cookie
 
 #  Secure API attack with CSRF (Cross-Site Request Forgery),
@@ -157,3 +158,11 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_SAMESITE': 'Lax',
 }
 
+INSTALLED_APPS += ["corsheaders"]
+MIDDLEWARE = ["corsheaders.middleware.CorsMiddleware"] + MIDDLEWARE
+
+# Cho phép phục vụ static files
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Whitenoise cho Heroku, Railway, etc.
+MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")

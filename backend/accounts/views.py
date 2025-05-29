@@ -12,6 +12,9 @@ from rest_framework.exceptions import AuthenticationFailed
 
 from rest_framework.permissions import IsAuthenticated
 
+from rest_framework.generics import ListCreateAPIView
+from .models import TenNhanVien
+from .serializers import TenNhanVienSerializer
 
 # REGISTER
 class UserRegisterSerializer(ModelSerializer):
@@ -87,3 +90,8 @@ class HomeView(APIView):
 
     def get(self, request):
         return Response({"message": f"Chào {request.user.username}!"})
+
+
+class TenNhanVienListCreateAPIView(ListCreateAPIView):
+    queryset = TenNhanVien.objects.all()
+    serializer_class = TenNhanVienSerializer
