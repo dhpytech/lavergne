@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Bell } from 'lucide-react'; // icon chuông thông báo
 
 const menu = [
-  { label: 'Information', path: '/info/main' },
+  { label: 'Information', path: '' },
   { label: 'Maris Input', path: '/input/maris' },
   { label: 'Bagging Input', path: '/input/bagging' },
   { label: 'Metal Input', path: '/input/metal' },
